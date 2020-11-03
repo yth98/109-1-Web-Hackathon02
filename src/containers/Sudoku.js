@@ -68,7 +68,8 @@ class Sudoku extends Component {
         // console.log(row, currCol);
         // console.log(col, currRow);
         // console.log(nine);
-        this.setState({conflicts: show ? conflicts : []});
+        this.setState({ conflicts: show ? conflicts : [] });
+        setTimeout(() => { this.setState({ conflicts: [] }); }, 1000);
         return (row.every(v => v === undefined) === false || col.every(v => v === undefined) === false || nine.every(v => v === undefined) === false);
     }
 
@@ -109,13 +110,14 @@ class Sudoku extends Component {
 
     handleKeyDownEvent = (event) => {
         if (this.state.gridValues !== null && this.state.selectedGrid.row_index !== -1 && this.state.selectedGrid.col_index !== -1 && ((event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105))) {
+            let num = event.keyCode >= 96 ? event.keyCode - 96 : event.keyCode - 48;
             if (this.state.problem.content[this.state.selectedGrid.row_index][this.state.selectedGrid.col_index] === "0") {
-                if (this.checkConflicts(event.keyCode - 48, true) === false) {
+                if (this.checkConflicts(num, true) === false) {
                     this.setState(state => ({gridValues: [
                         ...state.gridValues.slice(0,state.selectedGrid.row_index),
                         [
                             ...state.gridValues[state.selectedGrid.row_index].slice(0,state.selectedGrid.col_index),
-                            (event.keyCode - 48).toString(),
+                            num.toString(),
                             ...state.gridValues[state.selectedGrid.row_index].slice(state.selectedGrid.col_index+1),
                         ],
                         ...state.gridValues.slice(state.selectedGrid.row_index+1),
@@ -124,7 +126,7 @@ class Sudoku extends Component {
                 }
                 else {
                     this.setState({ gameBoardBorderStyle: "8px solid #E77" });
-                    setTimeout(() => { console.log(this.state);this.setState({ gameBoardBorderStyle: "8px solid #333" }); }, 60000);
+                    setTimeout(() => { this.setState({ gameBoardBorderStyle: "8px solid #333" }); }, 1000);
                 }
             }
         }
