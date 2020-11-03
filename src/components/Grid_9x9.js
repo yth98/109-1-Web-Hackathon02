@@ -1,10 +1,11 @@
+/* eslint-disable react/jsx-pascal-case */
 import React, { Component } from 'react';
 import Grid_1x1 from '../components/Grid_1x1';
 
 class Grid_9x9 extends Component {
-    constructor(props) {
-        super(props);
-    }
+    // constructor(props) {
+    //     super(props);
+    // }
     
     checkConflicted = (conflicts, row_index, col_index) => {
         return conflicts.find(c => c.row_index === row_index + 0 && c.col_index === col_index + 0) !== undefined;

@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-pascal-case */
 import React, { Component } from 'react';
 import ReactLoading from "react-loading";
 import { Fireworks } from 'fireworks/lib/react'
@@ -22,25 +23,71 @@ class Sudoku extends Component {
         }
     }
 
-    handle_grid_1x1_click = (row_index, col_index) => {
-        // TODO
+    checkConflicts = (num) => {
+        if (num === 0) {
+            this.setState({conflicts: []});
+            return false;
+        }
+        let conflicts = [];
+        let row = [0,1,2,3,4,5,6,7,8].map((_,i) => {
+            if (this.state.gridValues[this.state.selectedGrid.row_index][i] === num.toString() && i !== this.state.selectedGrid.col_index) {
+                conflicts.push({row_index: this.state.selectedGrid.row_index, col_index: i,});
+                return _;
+            } else
+                return undefined;
+        });
+        let col = [0,1,2,3,4,5,6,7,8].map((_,i) => {
+            if (this.state.gridValues[i][this.state.selectedGrid.col_index] === num.toString() && i !== this.state.selectedGrid.row_index) {
+                conflicts.push({row_index: i, col_index: this.state.selectedGrid.col_index,});
+                return _;
+            } else
+                return undefined;
+        });
+        let nine = [0,1,2,3,4,5,6,7,8].map((_,i) => {
+            let ir = Math.floor(i/3), ic = i%3;
+            let br = Math.floor(this.state.selectedGrid.row_index/3), bc = Math.floor(this.state.selectedGrid.col_index/3);
+            let xr = this.state.selectedGrid.row_index%3, xc = this.state.selectedGrid.col_index%3;
+            // console.log(ir, ic, br, bc, xr, xc);
+            if (this.state.gridValues[br*3+ir][bc*3+ic] === num.toString() && (ir !== xr || ic !== xc)) {
+                conflicts.push({row_index: br*3+ir, col_index: bc*3+ic,});
+                return _;
+            } else
+                return undefined;
+        });
+        // console.log(row, this.state.selectedGrid.col_index);
+        // console.log(col, this.state.selectedGrid.row_index);
+        // console.log(nine);
+        this.setState({conflicts: conflicts});
+        return (row.every(v => v === undefined) === false || col.every(v => v === undefined) === false || nine.every(v => v === undefined) === false);
+    }
 
-        // Useful hints:
-        // console.log(row_index, col_index)
-        // console.log(this.state.selectedGrid)
+    handle_grid_1x1_click = (row_index, col_index) => {
+        this.setState({selectedGrid: { row_index: row_index, col_index: col_index }});
     }
 
     handleKeyDownEvent = (event) => {
-        // TODO
-
-        // Useful hints:
-        // console.log(event)
-        // if (this.state.gridValues !== null && this.state.selectedGrid.row_index !== -1 && this.state.selectedGrid.col_index !== -1 && (event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105)) {}
-        // if (this.state.problem.content[this.state.selectedGrid.row_index][this.state.selectedGrid.col_index] === "0") {}
+        if (this.state.gridValues !== null && this.state.selectedGrid.row_index !== -1 && this.state.selectedGrid.col_index !== -1 && ((event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105))) {
+            if (this.state.problem.content[this.state.selectedGrid.row_index][this.state.selectedGrid.col_index] === "0") {
+                if (this.checkConflicts(event.keyCode - 48) === false)
+                    this.setState(state => ({gridValues: [
+                        ...state.gridValues.slice(0,state.selectedGrid.row_index),
+                        [
+                            ...state.gridValues[state.selectedGrid.row_index].slice(0,state.selectedGrid.col_index),
+                            (event.keyCode - 48).toString(),
+                            ...state.gridValues[state.selectedGrid.row_index].slice(state.selectedGrid.col_index+1),
+                        ],
+                        ...state.gridValues.slice(state.selectedGrid.row_index+1),
+                    ]}));
+                else {
+                    this.setState({ gameBoardBorderStyle: "8px solid #E77" });
+                    setTimeout(() => { this.setState({ gameBordBoarderStyle: "8px solid #333" }); }, 1);
+                }
+            }
+        }
     }
 
     handleScreenKeyboardInput = (num) => {
-        // TODO
+        this.handleKeyDownEvent({keyCode: num+48});
     }
 
     componentDidMount = () => {
