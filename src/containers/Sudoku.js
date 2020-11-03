@@ -23,30 +23,40 @@ class Sudoku extends Component {
         }
     }
 
-    checkConflicts = (num) => {
+    resetGame = () => {
+        this.setState(state => ({
+            gameBoardBorderStyle: "8px solid #000",
+            completeFlag: false,
+            conflicts: [],
+        }));
+    }
+
+    checkConflicts = (num, show, r, c) => {
         if (num === 0) {
             this.setState({conflicts: []});
             return false;
         }
+        let currRow = show ? this.state.selectedGrid.row_index : r;
+        let currCol = show ? this.state.selectedGrid.col_index : c;
         let conflicts = [];
         let row = [0,1,2,3,4,5,6,7,8].map((_,i) => {
-            if (this.state.gridValues[this.state.selectedGrid.row_index][i] === num.toString() && i !== this.state.selectedGrid.col_index) {
-                conflicts.push({row_index: this.state.selectedGrid.row_index, col_index: i,});
+            if (this.state.gridValues[currRow][i] === num.toString() && i !== currCol) {
+                conflicts.push({row_index: currRow, col_index: i,});
                 return _;
             } else
                 return undefined;
         });
         let col = [0,1,2,3,4,5,6,7,8].map((_,i) => {
-            if (this.state.gridValues[i][this.state.selectedGrid.col_index] === num.toString() && i !== this.state.selectedGrid.row_index) {
-                conflicts.push({row_index: i, col_index: this.state.selectedGrid.col_index,});
+            if (this.state.gridValues[i][currCol] === num.toString() && i !== currRow) {
+                conflicts.push({row_index: i, col_index: currCol,});
                 return _;
             } else
                 return undefined;
         });
         let nine = [0,1,2,3,4,5,6,7,8].map((_,i) => {
             let ir = Math.floor(i/3), ic = i%3;
-            let br = Math.floor(this.state.selectedGrid.row_index/3), bc = Math.floor(this.state.selectedGrid.col_index/3);
-            let xr = this.state.selectedGrid.row_index%3, xc = this.state.selectedGrid.col_index%3;
+            let br = Math.floor(currRow/3), bc = Math.floor(currCol/3);
+            let xr = currRow%3, xc = currCol%3;
             // console.log(ir, ic, br, bc, xr, xc);
             if (this.state.gridValues[br*3+ir][bc*3+ic] === num.toString() && (ir !== xr || ic !== xc)) {
                 conflicts.push({row_index: br*3+ir, col_index: bc*3+ic,});
@@ -54,11 +64,42 @@ class Sudoku extends Component {
             } else
                 return undefined;
         });
-        // console.log(row, this.state.selectedGrid.col_index);
-        // console.log(col, this.state.selectedGrid.row_index);
-        // console.log(nine);
-        this.setState({conflicts: conflicts});
+        console.log(num);
+        console.log(row, currCol);
+        console.log(col, currRow);
+        console.log(nine);
+        this.setState({conflicts: show ? conflicts : []});
         return (row.every(v => v === undefined) === false || col.every(v => v === undefined) === false || nine.every(v => v === undefined) === false);
+    }
+
+    checkComplete = (auto, autoGrid) => {
+        return [0,1,2,3,4,5,6,7,8].map((_,i) => {
+            return [0,1,2,3,4,5,6,7,8].map((__,j) => {
+                if (auto)
+                    return autoGrid[i][j] !== "0";
+                else
+                    return this.state.gridValues[i][j] !== "0";
+            }).every(v => v);
+        }).every(v => v);
+    }
+
+    autoComplete = () => {
+        let myGrid = this.state.gridValues.slice();
+        if (this.state.problem === null) return;
+        while (this.checkComplete(true, myGrid) === false) {
+            [0,1,2,3,4,5,6,7,8].map((_,i) => {
+                [0,1,2,3,4,5,6,7,8].map((__,j) => {
+                    if (this.state.gridValues[i][j] !== "0") return undefined;
+                    let kk = [1,2,3,4,5,6,7,8,9].map((k,___) => !this.checkConflicts(k, false, i, j));
+                    if (kk.filter(k=>k).length === 1)
+                        myGrid[i][j] = (kk.find(k=>k)+1).toString();
+                    return undefined;
+                })
+                return undefined;
+            })
+            console.log(myGrid);
+        }
+        this.setState({selectedGrid: myGrid, completeFlag: true,});
     }
 
     handle_grid_1x1_click = (row_index, col_index) => {
@@ -68,7 +109,7 @@ class Sudoku extends Component {
     handleKeyDownEvent = (event) => {
         if (this.state.gridValues !== null && this.state.selectedGrid.row_index !== -1 && this.state.selectedGrid.col_index !== -1 && ((event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105))) {
             if (this.state.problem.content[this.state.selectedGrid.row_index][this.state.selectedGrid.col_index] === "0") {
-                if (this.checkConflicts(event.keyCode - 48) === false)
+                if (this.checkConflicts(event.keyCode - 48, true) === false) {
                     this.setState(state => ({gridValues: [
                         ...state.gridValues.slice(0,state.selectedGrid.row_index),
                         [
@@ -78,9 +119,11 @@ class Sudoku extends Component {
                         ],
                         ...state.gridValues.slice(state.selectedGrid.row_index+1),
                     ]}));
+                    this.setState({completeFlag: this.checkComplete(false)});
+                }
                 else {
-                    this.setState({ gameBoardBorderStyle: "8px solid #E77" });
-                    setTimeout(() => { this.setState({ gameBordBoarderStyle: "8px solid #333" }); }, 1);
+                    // this.setState({ gameBoardBorderStyle: "8px solid #E77" });
+                    // setTimeout(() => { this.setState({ gameBordBoarderStyle: "8px solid #333" }); }, 1);
                 }
             }
         }
@@ -136,7 +179,7 @@ class Sudoku extends Component {
         }
         return (
             <>
-                <Header problemList={problemList} loadProblem={this.loadProblem} gridValues={this.state.gridValues} problem={this.state.problem} />
+                <Header problemList={problemList} loadProblem={this.loadProblem} gridValues={this.state.gridValues} problem={this.state.problem} reset={this.resetGame} auto={this.autoComplete} />
                 {this.state.loading ? (<ReactLoading type={"bars"} color={"#777"} height={"40vh"} width={"40vh"} />) : (
                     <div id="game-board" className="gameBoard" style={{ border: this.state.gameBoardBorderStyle }}>
                         <div className="row">
