@@ -64,10 +64,10 @@ class Sudoku extends Component {
             } else
                 return undefined;
         });
-        console.log(num);
-        console.log(row, currCol);
-        console.log(col, currRow);
-        console.log(nine);
+        // console.log(num);
+        // console.log(row, currCol);
+        // console.log(col, currRow);
+        // console.log(nine);
         this.setState({conflicts: show ? conflicts : []});
         return (row.every(v => v === undefined) === false || col.every(v => v === undefined) === false || nine.every(v => v === undefined) === false);
     }
@@ -84,26 +84,27 @@ class Sudoku extends Component {
     }
 
     autoComplete = () => {
-        let myGrid = this.state.gridValues.slice();
         if (this.state.problem === null) return;
+        let myGrid = this.state.gridValues.slice();
         while (this.checkComplete(true, myGrid) === false) {
             [0,1,2,3,4,5,6,7,8].map((_,i) => {
                 [0,1,2,3,4,5,6,7,8].map((__,j) => {
                     if (this.state.gridValues[i][j] !== "0") return undefined;
                     let kk = [1,2,3,4,5,6,7,8,9].map((k,___) => !this.checkConflicts(k, false, i, j));
                     if (kk.filter(k=>k).length === 1)
-                        myGrid[i][j] = (kk.find(k=>k)+1).toString();
+                        myGrid[i][j] = (kk.findIndex(k=>k)+1).toString();
                     return undefined;
                 })
                 return undefined;
             })
-            console.log(myGrid);
+            // console.log(myGrid);
         }
         this.setState({selectedGrid: myGrid, completeFlag: true,});
     }
 
     handle_grid_1x1_click = (row_index, col_index) => {
-        this.setState({selectedGrid: { row_index: row_index, col_index: col_index }});
+        if (this.state.problem === null || this.state.problem.content[row_index][col_index] === "0")
+            this.setState({selectedGrid: { row_index: row_index, col_index: col_index }});
     }
 
     handleKeyDownEvent = (event) => {
@@ -122,8 +123,8 @@ class Sudoku extends Component {
                     this.setState({completeFlag: this.checkComplete(false)});
                 }
                 else {
-                    // this.setState({ gameBoardBorderStyle: "8px solid #E77" });
-                    // setTimeout(() => { this.setState({ gameBordBoarderStyle: "8px solid #333" }); }, 1);
+                    this.setState({ gameBoardBorderStyle: "8px solid #E77" });
+                    setTimeout(() => { console.log(this.state);this.setState({ gameBoardBorderStyle: "8px solid #333" }); }, 60000);
                 }
             }
         }
@@ -142,7 +143,8 @@ class Sudoku extends Component {
             loading: true,
             problem: null,
             gridValues: null,
-            selectedGrid: { row_index: -1, col_index: -1 }
+            selectedGrid: { row_index: -1, col_index: -1 },
+            completeFlag: false,
         });
 
         const problem = await require(`../problems/${name}`)

@@ -11,7 +11,7 @@ let Grid_1x1 = ({value, fixed, row_index, col_index, handle_grid_1x1_click, sele
         borderRight: (col_index % 3 === 2) ? "1.5px solid transparent" : "1.5px solid #999",
     };
     return (
-        <div className="grid_1x1" id={`grid-${row_index}*${col_index}`} tabindex="1" style={gridStyle} onClick={() => handle_grid_1x1_click(row_index, col_index)}>
+        <div className="grid_1x1" id={`grid-${row_index}*${col_index}`} tabIndex="1" style={gridStyle} onClick={() => handle_grid_1x1_click(row_index, col_index)}>
             { value === "0" ? "" : value}
         </div>
     );
